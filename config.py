@@ -1,7 +1,12 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 DATABASE = {
-    'database': 'client_management',
-    'user': 'pahankov',
-    'password': 'Circul77',
-    'host': 'localhost',
-    'port': '5432'
+    'database': os.getenv('DATABASE_NAME'),
+    'user': os.getenv('DATABASE_USER'),
+    'password': os.getenv('DATABASE_PASSWORD'),
+    'host': os.getenv('DATABASE_HOST'),
+    'port': os.getenv('DATABASE_PORT')
 }

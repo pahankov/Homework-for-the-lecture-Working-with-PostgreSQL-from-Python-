@@ -1,50 +1,7 @@
 import psycopg2
-import re
 from config import DATABASE
-
-def get_connection():
-    """
-    Создает и возвращает соединение с базой данных.
-    """
-    return psycopg2.connect(**DATABASE)
-
-def execute_query(query, params=None):
-    """
-    Выполняет SQL-запрос с переданными параметрами и возвращает результат.
-
-    :param query: SQL-запрос для выполнения.
-    :param params: Параметры для SQL-запроса.
-    :return: Результат выполнения запроса.
-    """
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, params)
-                if query.strip().upper().startswith("SELECT"):
-                    return cur.fetchall()
-                else:
-                    conn.commit()
-    except psycopg2.Error as e:
-        print(f"Ошибка выполнения запроса: {e}")
-
-def validate_email(email):
-    """
-    Проверяет, что адрес электронной почты имеет правильный формат.
-
-    :param email: Адрес электронной почты.
-    :return: True, если формат корректен, False в противном случае.
-    """
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(email_regex, email) is not None
-
-def validate_phone(phone_number):
-    """
-    Проверяет, что номер телефона содержит только цифры.
-
-    :param phone_number: Номер телефона.
-    :return: True, если номер корректен, False в противном случае.
-    """
-    return phone_number.isdigit()
+from validation import validate_email, validate_phone
+from db_utils import get_connection, execute_query
 
 def add_client(first_name, last_name, email):
     """
@@ -101,12 +58,13 @@ def update_client(client_id, first_name=None, last_name=None, email=None):
             UPDATE client SET last_name=%s WHERE id=%s;
         '''
         execute_query(query, (last_name, client_id))
-    if email:
+    if email and validate_email(email):
         query = '''
             UPDATE client SET email=%s WHERE id=%s;
         '''
         execute_query(query, (email, client_id))
-
+    elif email:
+        print("Некорректный формат электронной почты.")
 
 def delete_phone(client_id, phone_number):
     """
@@ -119,7 +77,6 @@ def delete_phone(client_id, phone_number):
         DELETE FROM phone WHERE client_id=%s AND phone_number=%s;
     '''
     execute_query(query, (client_id, phone_number))
-
 
 def delete_client(client_id):
     """
@@ -135,7 +92,6 @@ def delete_client(client_id):
         DELETE FROM client WHERE id=%s;
     '''
     execute_query(query_client, (client_id,))
-
 
 def find_client(first_name=None, last_name=None, email=None, phone_number=None):
     """
@@ -169,7 +125,6 @@ def find_client(first_name=None, last_name=None, email=None, phone_number=None):
     query += " AND ".join(conditions)
     return execute_query(query, tuple(params))
 
-
 def check_data():
     """
     Проверяет и выводит данные клиентов и номеров телефонов из базы данных.
@@ -181,7 +136,6 @@ def check_data():
     query_phones = 'SELECT * FROM phone;'
     phones = execute_query(query_phones)
     print("Phones:", phones)
-
 
 if __name__ == "__main__":
     client_id = add_client("Андрей", "Овчинников", "andrey@mail.ru")

@@ -21,7 +21,12 @@ def execute_query(query, params=None):
                 cur.execute(query, params)
                 if query.strip().upper().startswith("SELECT"):
                     return cur.fetchall()
+                elif query.strip().upper().startswith("INSERT") and "RETURNING" in query.upper():
+                    conn.commit()
+                    return cur.fetchone()
                 else:
                     conn.commit()
+                    return True  # Успешное выполнение запроса без возвращаемого результата
     except psycopg2.Error as e:
         print(f"Ошибка выполнения запроса: {e}")
+        return None

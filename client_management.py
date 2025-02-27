@@ -14,14 +14,18 @@ def add_client(first_name, last_name, email):
     """
     if not validate_email(email):
         print("Некорректный формат электронной почты.")
-        return
+        return None
 
     query = '''
         INSERT INTO client (first_name, last_name, email) VALUES (%s, %s, %s) RETURNING id;
     '''
     result = execute_query(query, (first_name, last_name, email))
     if result:
-        return result[0][0]
+        return result[0]
+    else:
+        print("Не удалось добавить клиента.")
+        return None
+
 
 def add_phone(client_id, phone_number):
     """
@@ -37,7 +41,13 @@ def add_phone(client_id, phone_number):
     query = '''
         INSERT INTO phone (client_id, phone_number) VALUES (%s, %s);
     '''
-    execute_query(query, (client_id, phone_number))
+    result = execute_query(query, (client_id, phone_number))
+    if result is None:
+        print(f"Не удалось добавить номер телефона {phone_number} для клиента с ID {client_id}.")
+    else:
+        print(f"Номер телефона {phone_number} успешно добавлен для клиента с ID {client_id}.")
+
+
 
 def update_client(client_id, first_name=None, last_name=None, email=None):
     """
@@ -52,19 +62,28 @@ def update_client(client_id, first_name=None, last_name=None, email=None):
         query = '''
             UPDATE client SET first_name=%s WHERE id=%s;
         '''
-        execute_query(query, (first_name, client_id))
+        result = execute_query(query, (first_name, client_id))
+        if result is None:
+            print("Не удалось обновить имя клиента.")
+
     if last_name:
         query = '''
             UPDATE client SET last_name=%s WHERE id=%s;
         '''
-        execute_query(query, (last_name, client_id))
+        result = execute_query(query, (last_name, client_id))
+        if result is None:
+            print("Не удалось обновить фамилию клиента.")
+
     if email and validate_email(email):
         query = '''
             UPDATE client SET email=%s WHERE id=%s;
         '''
-        execute_query(query, (email, client_id))
+        result = execute_query(query, (email, client_id))
+        if result is None:
+            print("Не удалось обновить email клиента.")
     elif email:
         print("Некорректный формат электронной почты.")
+
 
 def delete_phone(client_id, phone_number):
     """
